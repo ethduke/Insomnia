@@ -56,6 +56,15 @@ final class ConfigTests: XCTestCase {
         XCTAssertEqual(try Store.makeDecoder().decode(Config.self, from: data), on)
     }
 
+    func testEarlierThermalCutoffDefaultsOffAndRoundTrips() throws {
+        XCTAssertFalse(Config().thermalEndAtSerious)
+        let legacy = try Store.makeDecoder().decode(Config.self, from: Data(#"{"thermalRules": true}"#.utf8))
+        XCTAssertFalse(legacy.thermalEndAtSerious)
+        let on = try Store.makeDecoder().decode(Config.self, from: Data(#"{"thermalEndAtSerious": true}"#.utf8))
+        XCTAssertTrue(on.thermalEndAtSerious)
+        XCTAssertEqual(try Store.makeDecoder().decode(Config.self, from: Store.makeEncoder().encode(on)), on)
+    }
+
     // MARK: Battery floors
 
     func testDefaultFloorsAreOrdered() {

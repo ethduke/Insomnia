@@ -617,6 +617,7 @@ IOKit sends no event for a read that keeps failing.
 | battery present but unreadable on two consecutive reads, on battery, `endFloor` above 0 | end session, notify | — |
 | thermal state `serious` | `lowpowermode 1` | thermal back to `nominal`/`fair`, or session end |
 | thermal state `critical` | end session, notify | — |
+| thermal state `serious`, with `thermalEndAtSerious` enabled | end session, notify instead of enabling Low Power Mode | — |
 | lid closed (if `lowPowerOnLidClose`, charging or not) | `lowpowermode 1`, no notification | lid opened, or session end |
 
 `PowerMonitor` tells a machine with no internal battery (desktop: no floor
@@ -647,6 +648,14 @@ causes are the battery floor, a serious thermal state, and (by default) a closed
 lid. One evaluation owns the mode: it is switched off only when no cause holds.
 Battery and thermal rules run only while the app is alive; they are not
 provided by the standalone backstop. Performance effects depend on workload.
+
+`thermalEndAtSerious` defaults to false, including when decoding an older
+config. When enabled and `thermalRules` is on, serious heat ends the session
+through the same journaled restoration as critical heat. Critical still uses
+its own end reason. Cooling does not restart the session. This restores normal
+sleep eligibility; it neither forces sleep nor stops agent workloads. Other
+apps can continue holding sleep assertions. Thermal pressure comes from
+`ProcessInfo`, not a sensor temperature in degrees Celsius.
 
 ### 7. Network failover
 

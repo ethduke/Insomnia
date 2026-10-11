@@ -57,6 +57,9 @@ struct Config: Codable, Equatable, Sendable {
     /// `setLowPowerFloor` and `normalizeFloors`.
     var endFloor: Int = 10
     var thermalRules: Bool = true
+    /// Opt in to ending at serious heat instead of waiting for critical.
+    /// Ignored when thermalRules is off; older configs keep the existing cutoff.
+    var thermalEndAtSerious: Bool = false
 
     // Network failover
     var hotspotSSID: String = ""
@@ -159,6 +162,7 @@ struct Config: Codable, Equatable, Sendable {
         lowPowerFloor = try c.decodeIfPresent(Int.self, forKey: .lowPowerFloor) ?? d.lowPowerFloor
         endFloor = try c.decodeIfPresent(Int.self, forKey: .endFloor) ?? d.endFloor
         thermalRules = try c.decodeIfPresent(Bool.self, forKey: .thermalRules) ?? d.thermalRules
+        thermalEndAtSerious = try c.decodeIfPresent(Bool.self, forKey: .thermalEndAtSerious) ?? d.thermalEndAtSerious
         hotspotSSID = try c.decodeIfPresent(String.self, forKey: .hotspotSSID) ?? d.hotspotSSID
         nudgeThreshold = try c.decodeIfPresent(TimeInterval.self, forKey: .nudgeThreshold) ?? d.nudgeThreshold
         tmuxTargets = try c.decodeIfPresent([String].self, forKey: .tmuxTargets) ?? d.tmuxTargets

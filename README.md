@@ -112,8 +112,11 @@ On battery power, Insomnia turns on Low Power Mode below 40% and ends the
 session below 10%. Those are the defaults. You can change both in Settings,
 and an end floor of 0 turns the battery end off. The heat rules turn on Low Power
 Mode when the Mac gets seriously hot and end the session at critical heat.
-They are on by default, and Settings can turn them off. All of these rules
-only work while the app runs.
+They are on by default, and Settings can turn them off. Enable **End session
+at serious heat** to restore normal sleep earlier, at serious thermal pressure.
+This ends the keep-awake session; it does not force sleep or stop running agents.
+macOS supplies thermal pressure levels, not a CPU temperature in degrees.
+All of these rules only work while the app runs.
 
 Before your first session, check Settings. Then run a short session you can
 watch, and read `~/Library/Logs/Insomnia/insomnia.log` afterward.

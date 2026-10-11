@@ -57,6 +57,21 @@ final class FloorRulesTests: XCTestCase {
         XCTAssertEqual(eval(nil, thermal: .critical), [.endSession(.thermalCritical)])
     }
 
+    func testEarlierThermalCutoffEndsAtSeriousOnBatteryOrCharger() {
+        var c = Config()
+        c.thermalEndAtSerious = true
+        XCTAssertEqual(eval(80, thermal: .serious, config: c), [.endSession(.thermalSerious)])
+        XCTAssertEqual(eval(80, charging: true, thermal: .serious, lp: true, config: c), [.endSession(.thermalSerious)])
+        XCTAssertEqual(eval(nil, thermal: .serious, lid: true, config: c), [.endSession(.thermalSerious)])
+        XCTAssertEqual(eval(80, thermal: .critical, config: c), [.endSession(.thermalCritical)])
+        XCTAssertEqual(eval(80, thermal: .nominal, config: c), [])
+        XCTAssertEqual(eval(80, thermal: .fair, config: c), [])
+        XCTAssertEqual(eval(5, thermal: .serious, config: c), [.endSession(.batteryFloor)])
+        c.thermalRules = false
+        XCTAssertEqual(eval(80, thermal: .serious, config: c), [])
+        XCTAssertEqual(eval(80, thermal: .critical, config: c), [])
+    }
+
     func testBatteryEndFloorWinsOverThermalCritical() {
         XCTAssertEqual(eval(5, thermal: .critical), [.endSession(.batteryFloor)])
     }
@@ -280,6 +295,39 @@ final class FloorRuleDriverTests: XCTestCase {
         await driver.run(battery: .percent(5), isCharging: false, thermal: .critical, lidClosed: false)
         XCTAssertEqual(h.guardFake.calls, [])
         XCTAssertEqual(h.notifier.posts.count, 0)
+    }
+
+    func testEarlierThermalCutoffRestoresSessionAndDoesNotRestartWhenCool() async throws {
+        let m = h.makeManager()
+        m.config.thermalEndAtSerious = true
+        await m.start(duration: 3600)
+        await m.setLowPower(true)
+        let driver = FloorRuleDriver(manager: m, notifier: h.notifier)
+        await driver.run(battery: .percent(80), isCharging: true, thermal: .serious, lidClosed: true)
+        XCTAssertFalse(m.isActive)
+        XCTAssertNil(try h.store.loadSession())
+        XCTAssertEqual(try h.store.loadState(), RuntimeState.clean)
+        XCTAssertFalse(h.guardFake.lowPowerOn)
+        XCTAssertTrue(h.guardFake.calls.contains("disablesleep 0"))
+        XCTAssertTrue(h.notifier.posts.last?.body.contains("serious") ?? false)
+        let calls = h.guardFake.calls
+        await driver.run(battery: .percent(80), isCharging: true, thermal: .nominal, lidClosed: false)
+        XCTAssertFalse(m.isActive)
+        XCTAssertEqual(h.guardFake.calls, calls)
+    }
+
+    func testEarlierThermalCutoffKeepsFailedSleepRestorationForRetry() async throws {
+        let m = h.makeManager()
+        m.config.thermalEndAtSerious = true
+        await m.start(duration: 3600)
+        h.guardFake.throwOn = ["disablesleep 0"]
+        let driver = FloorRuleDriver(manager: m, notifier: h.notifier)
+        await driver.run(battery: .percent(80), isCharging: false, thermal: .serious, lidClosed: false)
+        XCTAssertTrue(try XCTUnwrap(h.store.loadState()).sleepDisabledByUs)
+        h.guardFake.throwOn = []
+        _ = await m.end(reason: .thermalSerious)
+        XCTAssertEqual(try h.store.loadState(), RuntimeState.clean)
+        XCTAssertNil(try h.store.loadSession())
     }
 
     func testSessionEndWhileLowPowerEnableIsSuspendedLeavesCleanState() async throws {

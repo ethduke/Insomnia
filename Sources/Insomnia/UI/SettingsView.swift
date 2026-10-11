@@ -243,7 +243,12 @@ struct SettingsView: View {
             Text("0 turns the battery end off. The end floor stays below the Low Power Mode floor. Moving one onto the other moves it along.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Toggle("Thermal rules (Low Power Mode when hot, end when critical)", isOn: bind(\.thermalRules))
+            Toggle("Thermal rules", isOn: bind(\.thermalRules))
+            Toggle("End session at serious heat", isOn: bind(\.thermalEndAtSerious))
+                .disabled(!manager.config.thermalRules)
+            Text("By default, serious heat turns on Low Power Mode and critical heat ends the session. The earlier cutoff ends at serious heat instead. Ending restores normal sleep; it does not force sleep or stop running agents.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
