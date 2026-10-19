@@ -1243,8 +1243,8 @@ transitions. If it feels like a web dropdown, it is wrong.
 | network path | `NWPathMonitor` | none |
 | session deadline | one in-app timer plus independent launchd recovery | recovery checks may wake periodically |
 | countdown redraw | 1 Hz timer, stopped while lid closed | one wake per second while active and visible |
-| hotspot retry | only during an outage | none otherwise |
 | hotspot usage | SystemConfiguration change events and 5 s counter readings | one read per 5 s only while opted in, configured and a session runs |
+| hotspot retry | only during an outage | none otherwise |
 
 ## Repository layout
 
